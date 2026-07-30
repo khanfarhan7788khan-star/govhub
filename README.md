@@ -133,3 +133,4 @@ JWT_SECRET=replace-with-a-long-random-string
 
 If unset, a dev-only default is used — fine for local testing, **not** for
 production.
+"# govhub" 
