@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id           String   @id
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("admins")
+}
+
+model Category {
+  id   String @id
+  key  String @unique
+  icon String
+
+  @@map("categories")
+}
+
+model Site {
+  id           String   @id
+  name         String
+  description  String
+  url          String
+  category     String
+  ministry     String
+  state        String?
+  level        String
+  languages    String
+  tags         String
+  featured     Boolean
+  verifiedDate DateTime @map("verified_date")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("sites")
+}
+
+model Favorite {
+  sessionId String   @map("session_id")
+  siteId    String   @map("site_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([sessionId, siteId])
+  @@map("favorites")
+}
+
+model Message {
+  id        String   @id
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("messages")
+}
+
+model Suggestion {
+  id        String   @id
+  name      String
+  url       String
+  category  String
+  note      String?
+  status    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("suggestions")
+}
+
+model Report {
+  id        String   @id
+  siteId    String   @map("site_id")
+  note      String?
+  status    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("reports")
+}
