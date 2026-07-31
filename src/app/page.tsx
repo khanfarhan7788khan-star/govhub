@@ -11,12 +11,15 @@ export const dynamic = "force-dynamic";
 export default async function HomePage() {
   const store = await cookies();
   const sid = store.get("govhub_sid")?.value;
-  const favIds = getFavoriteIdSet(sid);
 
-  const featured = getFeaturedSites();
-  const recent = getRecentSites();
-  const categories = getCategoriesWithCounts().slice(0, 12);
-  const stats = getStats();
+  const [favIds, featured, recent, allCategories, stats] = await Promise.all([
+    getFavoriteIdSet(sid),
+    getFeaturedSites(),
+    getRecentSites(),
+    getCategoriesWithCounts(),
+    getStats(),
+  ]);
+  const categories = allCategories.slice(0, 12);
 
   const statList = [
     { n: String(stats.totalSites), l: "Verified websites" },

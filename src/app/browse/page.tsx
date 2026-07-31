@@ -18,10 +18,12 @@ export default async function BrowsePage({ searchParams }: Props) {
 
   const store = await cookies();
   const sid = store.get("govhub_sid")?.value;
-  const favIds = getFavoriteIdSet(sid);
 
-  const results = searchSites({ q, category, levels, sort });
-  const categories = getCategoriesWithCounts();
+  const [favIds, results, categories] = await Promise.all([
+    getFavoriteIdSet(sid),
+    searchSites({ q, category, levels, sort }),
+    getCategoriesWithCounts(),
+  ]);
 
   return (
     <section className="wrap" style={{ padding: "36px 24px 90px" }}>

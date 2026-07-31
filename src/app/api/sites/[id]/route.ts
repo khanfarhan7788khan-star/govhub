@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db, SiteRow } from "@/lib/db";
+import { query, queryOne, run, SiteRow } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
 
 function toClient(row: SiteRow) {
@@ -14,12 +14,13 @@ function toClient(row: SiteRow) {
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const row = db.prepare("SELECT * FROM sites WHERE id = ?").get(id) as SiteRow | undefined;
+  const row = await queryOne<SiteRow>("SELECT * FROM sites WHERE id = $1", [id]);
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const related = db
-    .prepare("SELECT * FROM sites WHERE category = ? AND id != ? LIMIT 3")
-    .all(row.category, row.id) as SiteRow[];
+  const related = await query<SiteRow>("SELECT * FROM sites WHERE category = $1 AND id != $2 LIMIT 3", [
+    row.category,
+    row.id,
+  ]);
 
   return NextResponse.json({ site: toClient(row), related: related.map(toClient) });
 }
@@ -43,7 +44,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const existing = db.prepare("SELECT * FROM sites WHERE id = ?").get(id) as SiteRow | undefined;
+  const existing = await queryOne<SiteRow>("SELECT * FROM sites WHERE id = $1", [id]);
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const body = await req.json().catch(() => null);
@@ -63,19 +64,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     level: d.level ?? existing.level,
     languages: d.languages ? d.languages.join(",") : existing.languages,
     tags: d.tags ? d.tags.join(",") : existing.tags,
-    featured: d.featured !== undefined ? (d.featured ? 1 : 0) : existing.featured,
+    featured: d.featured !== undefined ? d.featured : existing.featured,
     verified_date: d.verified_date ?? existing.verified_date,
   };
 
-  db.prepare(`
-    UPDATE sites SET name=@name, description=@description, url=@url, category=@category,
-      ministry=@ministry, state=@state, level=@level, languages=@languages, tags=@tags,
-      featured=@featured, verified_date=@verified_date, updated_at=datetime('now')
-    WHERE id=@id
-  `).run({ ...merged, id });
+  await run(
+    `UPDATE sites SET name=$1, description=$2, url=$3, category=$4,
+      ministry=$5, state=$6, level=$7, languages=$8, tags=$9,
+      featured=$10, verified_date=$11, updated_at=now()
+    WHERE id=$12`,
+    [merged.name, merged.description, merged.url, merged.category, merged.ministry, merged.state, merged.level, merged.languages, merged.tags, merged.featured, merged.verified_date, id]
+  );
 
-  const row = db.prepare("SELECT * FROM sites WHERE id = ?").get(id) as SiteRow;
-  return NextResponse.json({ site: toClient(row) });
+  const row = await queryOne<SiteRow>("SELECT * FROM sites WHERE id = $1", [id]);
+  return NextResponse.json({ site: toClient(row as SiteRow) });
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -83,7 +85,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const info = db.prepare("DELETE FROM sites WHERE id = ?").run(id);
-  if (info.changes === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const info = await run("DELETE FROM sites WHERE id = $1", [id]);
+  if (info.rowCount === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

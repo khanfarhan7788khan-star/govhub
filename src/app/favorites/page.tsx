@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function FavoritesPage() {
   const store = await cookies();
   const sid = store.get("govhub_sid")?.value;
-  const favorites = getFavoriteSites(sid);
+  const favorites = await getFavoriteSites(sid);
 
   return (
     <section className="wrap" style={{ padding: "36px 24px 90px" }}>

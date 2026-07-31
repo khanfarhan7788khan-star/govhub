@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { run } from "@/lib/db";
 
 const schema = z.object({
   name: z.string().min(1),
@@ -16,11 +16,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Please fill in all fields correctly." }, { status: 400 });
   }
   const id = randomUUID();
-  db.prepare("INSERT INTO messages (id, name, email, message) VALUES (?, ?, ?, ?)").run(
+  await run("INSERT INTO messages (id, name, email, message) VALUES ($1, $2, $3, $4)", [
     id,
     parsed.data.name,
     parsed.data.email,
-    parsed.data.message
-  );
+    parsed.data.message,
+  ]);
   return NextResponse.json({ ok: true }, { status: 201 });
 }

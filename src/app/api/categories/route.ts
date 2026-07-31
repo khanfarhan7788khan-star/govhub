@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { query, run } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
 
 export async function GET() {
-  const cats = db.prepare("SELECT * FROM categories ORDER BY key ASC").all() as { id: string; key: string; icon: string }[];
-  const counts = db
-    .prepare("SELECT category, COUNT(*) AS c FROM sites GROUP BY category")
-    .all() as { category: string; c: number }[];
+  const cats = await query<{ id: string; key: string; icon: string }>("SELECT * FROM categories ORDER BY key ASC");
+  const counts = await query<{ category: string; c: number }>(
+    "SELECT category, COUNT(*)::int AS c FROM sites GROUP BY category"
+  );
   const countMap = Object.fromEntries(counts.map((c) => [c.category, c.c]));
   return NextResponse.json({
     categories: cats.map((c) => ({ ...c, count: countMap[c.key] || 0 })),
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const id = "cat-" + parsed.data.key.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + randomUUID().slice(0, 4);
   try {
-    db.prepare("INSERT INTO categories (id, key, icon) VALUES (?, ?, ?)").run(id, parsed.data.key, parsed.data.icon);
+    await run("INSERT INTO categories (id, key, icon) VALUES ($1, $2, $3)", [id, parsed.data.key, parsed.data.icon]);
   } catch {
     return NextResponse.json({ error: "Category already exists" }, { status: 409 });
   }
@@ -42,7 +42,7 @@ export async function DELETE(req: NextRequest) {
   const id = searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
-  const info = db.prepare("DELETE FROM categories WHERE id = ?").run(id);
-  if (info.changes === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const info = await run("DELETE FROM categories WHERE id = $1", [id]);
+  if (info.rowCount === 0) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

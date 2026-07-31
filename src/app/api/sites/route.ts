@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { db, SiteRow } from "@/lib/db";
+import { query, queryOne, run, SiteRow } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
 
 function toClient(row: SiteRow) {
@@ -22,33 +22,33 @@ export async function GET(req: NextRequest) {
   const featuredOnly = searchParams.get("featured") === "1";
 
   let sql = "SELECT * FROM sites WHERE 1=1";
-  const params: (string | number)[] = [];
+  const params: unknown[] = [];
 
   if (category) {
-    sql += " AND category = ?";
     params.push(category);
+    sql += ` AND category = $${params.length}`;
   }
   if (levels.length) {
-    sql += ` AND level IN (${levels.map(() => "?").join(",")})`;
-    params.push(...levels);
+    params.push(levels);
+    sql += ` AND level = ANY($${params.length}::text[])`;
   }
   if (featuredOnly) {
-    sql += " AND featured = 1";
+    sql += " AND featured = true";
   }
   if (q) {
+    params.push(`%${q}%`);
+    const p = `$${params.length}`;
     sql += ` AND (
-      lower(name) LIKE ? OR lower(description) LIKE ? OR
-      lower(category) LIKE ? OR lower(ministry) LIKE ? OR lower(tags) LIKE ?
+      lower(name) LIKE ${p} OR lower(description) LIKE ${p} OR
+      lower(category) LIKE ${p} OR lower(ministry) LIKE ${p} OR lower(tags) LIKE ${p}
     )`;
-    const like = `%${q}%`;
-    params.push(like, like, like, like, like);
   }
 
   if (sort === "az") sql += " ORDER BY name ASC";
   else if (sort === "recent") sql += " ORDER BY verified_date DESC";
   else sql += " ORDER BY featured DESC, name ASC";
 
-  const rows = db.prepare(sql).all(...params) as SiteRow[];
+  const rows = await query<SiteRow>(sql, params);
   return NextResponse.json({ sites: rows.map(toClient), total: rows.length });
 }
 
@@ -78,24 +78,12 @@ export async function POST(req: NextRequest) {
   const d = parsed.data;
   const id = d.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + randomUUID().slice(0, 6);
 
-  db.prepare(`
-    INSERT INTO sites (id, name, description, url, category, ministry, state, level, languages, tags, featured, verified_date)
-    VALUES (@id, @name, @description, @url, @category, @ministry, @state, @level, @languages, @tags, @featured, @verified_date)
-  `).run({
-    id,
-    name: d.name,
-    description: d.description,
-    url: d.url,
-    category: d.category,
-    ministry: d.ministry,
-    state: d.state || null,
-    level: d.level,
-    languages: d.languages.join(","),
-    tags: d.tags.join(","),
-    featured: d.featured ? 1 : 0,
-    verified_date: d.verified_date,
-  });
+  await run(
+    `INSERT INTO sites (id, name, description, url, category, ministry, state, level, languages, tags, featured, verified_date)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+    [id, d.name, d.description, d.url, d.category, d.ministry, d.state || null, d.level, d.languages.join(","), d.tags.join(","), d.featured, d.verified_date]
+  );
 
-  const row = db.prepare("SELECT * FROM sites WHERE id = ?").get(id) as SiteRow;
-  return NextResponse.json({ site: toClient(row) }, { status: 201 });
+  const row = await queryOne<SiteRow>("SELECT * FROM sites WHERE id = $1", [id]);
+  return NextResponse.json({ site: toClient(row as SiteRow) }, { status: 201 });
 }

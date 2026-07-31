@@ -1,15 +1,16 @@
-import { db } from "@/lib/db";
-import { SiteRow } from "@/lib/db";
+import { query, queryOne, SiteRow } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminOverviewPage() {
-  const totalSites = (db.prepare("SELECT COUNT(*) AS c FROM sites").get() as { c: number }).c;
-  const totalCats = (db.prepare("SELECT COUNT(*) AS c FROM categories").get() as { c: number }).c;
-  const pendingReports = (db.prepare("SELECT COUNT(*) AS c FROM reports WHERE status = 'pending'").get() as { c: number }).c;
-  const pendingSuggestions = (db.prepare("SELECT COUNT(*) AS c FROM suggestions WHERE status = 'pending'").get() as { c: number }).c;
-  const totalMessages = (db.prepare("SELECT COUNT(*) AS c FROM messages").get() as { c: number }).c;
-  const recent = db.prepare("SELECT * FROM sites ORDER BY verified_date DESC LIMIT 6").all() as SiteRow[];
+export default async function AdminOverviewPage() {
+  const totalSites = (await queryOne<{ c: number }>("SELECT COUNT(*)::int AS c FROM sites"))?.c ?? 0;
+  const totalCats = (await queryOne<{ c: number }>("SELECT COUNT(*)::int AS c FROM categories"))?.c ?? 0;
+  const pendingReports =
+    (await queryOne<{ c: number }>("SELECT COUNT(*)::int AS c FROM reports WHERE status = 'pending'"))?.c ?? 0;
+  const pendingSuggestions =
+    (await queryOne<{ c: number }>("SELECT COUNT(*)::int AS c FROM suggestions WHERE status = 'pending'"))?.c ?? 0;
+  const totalMessages = (await queryOne<{ c: number }>("SELECT COUNT(*)::int AS c FROM messages"))?.c ?? 0;
+  const recent = await query<SiteRow>("SELECT * FROM sites ORDER BY verified_date DESC LIMIT 6");
 
   const stats = [
     { n: totalSites, l: "Total listings" },

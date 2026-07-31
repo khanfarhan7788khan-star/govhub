@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { query, run } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
 
 export async function GET() {
   const admin = await getCurrentAdmin();
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const rows = db.prepare("SELECT * FROM suggestions ORDER BY created_at DESC").all();
+  const rows = await query("SELECT * FROM suggestions ORDER BY created_at DESC");
   return NextResponse.json({ suggestions: rows });
 }
 
@@ -25,12 +25,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Please check the form and try again." }, { status: 400 });
   }
   const id = randomUUID();
-  db.prepare("INSERT INTO suggestions (id, name, url, category, note) VALUES (?, ?, ?, ?, ?)").run(
+  await run("INSERT INTO suggestions (id, name, url, category, note) VALUES ($1, $2, $3, $4, $5)", [
     id,
     parsed.data.name,
     parsed.data.url,
     parsed.data.category,
-    parsed.data.note || null
-  );
+    parsed.data.note || null,
+  ]);
   return NextResponse.json({ ok: true }, { status: 201 });
 }

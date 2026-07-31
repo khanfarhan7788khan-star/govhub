@@ -10,13 +10,12 @@ export const dynamic = "force-dynamic";
 
 export default async function SiteDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const site = getSiteById(id);
+  const site = await getSiteById(id);
   if (!site) notFound();
 
-  const related = getRelatedSites(site.category, site.id);
   const store = await cookies();
   const sid = store.get("govhub_sid")?.value;
-  const favIds = getFavoriteIdSet(sid);
+  const [related, favIds] = await Promise.all([getRelatedSites(site.category, site.id), getFavoriteIdSet(sid)]);
 
   return (
     <section className="wrap" style={{ padding: "36px 24px 90px", maxWidth: 760 }}>

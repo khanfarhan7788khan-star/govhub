@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { queryOne, run } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/auth";
 
 const schema = z.object({ status: z.enum(["approved", "rejected", "pending"]) });
@@ -14,26 +14,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
 
-  const suggestion = db.prepare("SELECT * FROM suggestions WHERE id = ?").get(id) as
-    | { id: string; name: string; url: string; category: string; note: string | null }
-    | undefined;
+  const suggestion = await queryOne<{ id: string; name: string; url: string; category: string; note: string | null }>(
+    "SELECT * FROM suggestions WHERE id = $1",
+    [id]
+  );
   if (!suggestion) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  db.prepare("UPDATE suggestions SET status = ? WHERE id = ?").run(parsed.data.status, id);
+  await run("UPDATE suggestions SET status = $1 WHERE id = $2", [parsed.data.status, id]);
 
   if (parsed.data.status === "approved") {
     const siteId =
       suggestion.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") + "-" + id.slice(0, 6);
-    db.prepare(`
-      INSERT INTO sites (id, name, description, url, category, ministry, level, languages, tags, featured, verified_date)
-      VALUES (?, ?, ?, ?, ?, ?, 'Central', 'English', '', 0, date('now'))
-    `).run(
-      siteId,
-      suggestion.name,
-      suggestion.note || "Suggested by a community member and approved by an admin.",
-      suggestion.url,
-      suggestion.category,
-      "Unverified — added from a public suggestion"
+    await run(
+      `INSERT INTO sites (id, name, description, url, category, ministry, level, languages, tags, featured, verified_date)
+       VALUES ($1, $2, $3, $4, $5, $6, 'Central', 'English', '', false, CURRENT_DATE)`,
+      [
+        siteId,
+        suggestion.name,
+        suggestion.note || "Suggested by a community member and approved by an admin.",
+        suggestion.url,
+        suggestion.category,
+        "Unverified — added from a public suggestion",
+      ]
     );
   }
 
