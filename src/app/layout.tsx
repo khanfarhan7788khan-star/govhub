@@ -3,6 +3,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToastHost from "@/components/ToastHost";
+import Script from "next/script";
+
 
 export const metadata: Metadata = {
   title: "GovHub — Find Any Official Government Website",
@@ -32,8 +34,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <head>
-        <script dangerouslySetInnerHTML={{ __html: bootScript }} />
-      </head>
+  <script
+    dangerouslySetInnerHTML={{
+      __html: bootScript,
+    }}
+  />
+</head>
       <body>
         <Header />
         <main>{children}</main>
