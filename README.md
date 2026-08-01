@@ -52,7 +52,7 @@ one admin account — no separate migration step needed.
 
 ```
 URL:      /admin
-Email:    admin@govhub.in
+Email:    faynx@govhub.in
 Password: Admin@123
 ```
 
@@ -71,7 +71,7 @@ Then insert it via `psql` (or any Postgres client) against your `DATABASE_URL`:
 
 ```sql
 INSERT INTO admins (id, email, password_hash)
-VALUES ('admin-2', 'newadmin@govhub.in', '<paste the hash here>');
+VALUES ('admin-2', 'newfaynx@govhub.in', '<paste the hash here>');
 ```
 
 ## What's real vs. what you still need to add

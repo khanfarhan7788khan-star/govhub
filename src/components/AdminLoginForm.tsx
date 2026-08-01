@@ -41,7 +41,7 @@ export default function AdminLoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@govhub.in"
+            placeholder="faynx@govhub.in"
             style={{ width: "100%", marginTop: 5, padding: "11px 13px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontSize: 14 }}
           />
         </div>

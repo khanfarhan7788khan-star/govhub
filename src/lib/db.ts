@@ -141,7 +141,7 @@ async function migrateAndSeed() {
    ON CONFLICT (id) DO NOTHING`,
   [
       "admin-1",
-      "admin@govhub.in",
+      "faynx@govhub.in",
       hash,
     ]);
   }
