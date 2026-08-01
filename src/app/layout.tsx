@@ -6,11 +6,14 @@ import ToastHost from "@/components/ToastHost";
 import Script from "next/script";
 
 
-export const metadata: Metadata = {
-  title: "GovHub — Find Any Official Government Website",
-  description: "An independent, verified directory of official Indian government websites.",
+export const metadata = {
+  title: "GovHub",
+  description: "Find official government websites",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
-
 // Runs before hydration: restores the saved theme and guarantees an
 // anonymous session cookie exists so the very first API call (e.g. a
 // favourite toggle) already has somewhere to persist to.
