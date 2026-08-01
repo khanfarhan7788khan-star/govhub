@@ -60,9 +60,7 @@ export default function AdminLoginForm() {
         <button className="primary-btn block" type="submit" disabled={busy} style={{ width: "100%", marginTop: 6 }}>
           {busy ? "Signing in…" : "Sign in"}
         </button>
-        <div className="mono" style={{ fontSize: 11, color: "var(--ink-soft)", textAlign: "center", marginTop: 4 }}>
-          Seeded demo account: admin@govhub.in / Admin@123
-        </div>
+      
       </form>
     </div>
   );
