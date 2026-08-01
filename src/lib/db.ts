@@ -135,7 +135,11 @@ async function migrateAndSeed() {
   const { rows: adminCountRows } = await pool.query("SELECT COUNT(*)::int AS c FROM admins");
   if (adminCountRows[0].c === 0) {
     const hash = bcrypt.hashSync("Admin@123", 10);
-    await pool.query("INSERT INTO admins (id, email, password_hash) VALUES ($1, $2, $3)", [
+    await pool.query(
+  `INSERT INTO admins (id, email, password_hash)
+   VALUES ($1, $2, $3)
+   ON CONFLICT (id) DO NOTHING`,
+  [
       "admin-1",
       "admin@govhub.in",
       hash,
@@ -169,7 +173,11 @@ async function migrateAndSeed() {
       ["Utilities", "bolt"],
     ];
     for (const [key, icon] of cats) {
-      await pool.query("INSERT INTO categories (id, key, icon) VALUES ($1, $2, $3)", [
+      await pool.query(
+  `INSERT INTO categories (id, key, icon)
+   VALUES ($1, $2, $3)
+   ON CONFLICT (id) DO NOTHING`,
+  [
         `cat-${key.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
         key,
         icon,
@@ -205,11 +213,44 @@ async function migrateAndSeed() {
       { id: "nps-cra", name: "National Pension System — CRA", description: "Manage your NPS account, view statements and make contributions.", url: "https://www.cra-nsdl.com", category: "Pension", ministry: "Pension Fund Regulatory & Development Authority", state: null, level: "Central", languages: "English", tags: "nps,retirement", featured: false, verified_date: "2026-05-15" },
     ];
     for (const s of sites) {
-      await pool.query(
-        `INSERT INTO sites (id, name, description, url, category, ministry, state, level, languages, tags, featured, verified_date)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
-        [s.id, s.name, s.description, s.url, s.category, s.ministry, s.state, s.level, s.languages, s.tags, s.featured, s.verified_date]
-      );
+    await pool.query(
+  `INSERT INTO sites (
+      id,
+      name,
+      description,
+      url,
+      category,
+      ministry,
+      state,
+      level,
+      languages,
+      tags,
+      featured,
+      verified_date,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (id) DO NOTHING`,
+  [
+    s.id,
+    s.name,
+    s.description,
+    s.url,
+    s.category,
+    s.ministry,
+    s.state,
+    s.level,
+    s.languages,
+    s.tags,
+    s.featured,
+    s.verified_date,
+  ]
+);
     }
   }
 }
