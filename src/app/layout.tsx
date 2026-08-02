@@ -3,14 +3,16 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ToastHost from "@/components/ToastHost";
-import Script from "next/script";
 
-
-export const metadata = {
+export const metadata: Metadata = {
   title: "GovHub",
   description: "Find official government websites",
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+    ],
     apple: "/apple-touch-icon.png",
   },
 };
