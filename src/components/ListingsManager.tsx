@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { X, Pencil, Trash2 } from "lucide-react";
+import { X, Pencil, Trash2, FileText } from "lucide-react";
 import { Site } from "@/lib/types";
 import { showToast } from "@/lib/toast";
+import ServiceContentEditor from "./ServiceContentEditor";
 
 type FormState = {
   id?: string;
@@ -41,6 +42,7 @@ export default function ListingsManager() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [contentSite, setContentSite] = useState<Site | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -169,6 +171,9 @@ export default function ListingsManager() {
                   </td>
                   <td>
                     <div className="row-actions">
+                      <button className="iconbtn-sm" onClick={() => setContentSite(s)} aria-label="Edit service content" title="Service content">
+                        <FileText size={13} />
+                      </button>
                       <button className="iconbtn-sm" onClick={() => openEdit(s)} aria-label="Edit">
                         <Pencil size={13} />
                       </button>
@@ -261,6 +266,10 @@ export default function ListingsManager() {
             </form>
           </div>
         </div>
+      )}
+
+      {contentSite && (
+        <ServiceContentEditor siteId={contentSite.id} siteName={contentSite.name} onClose={() => setContentSite(null)} />
       )}
     </>
   );

@@ -14,6 +14,7 @@ export default function Footer() {
           <div>
             <h5>Directory</h5>
             <Link href="/browse">Browse all</Link>
+            <Link href="/blog">Guides &amp; articles</Link>
             <Link href="/favorites">Favourites</Link>
             <Link href="/guide">Application guide</Link>
             <Link href="/suggest">Suggest a website</Link>
@@ -23,11 +24,14 @@ export default function Footer() {
             <Link href="/about">About</Link>
             <Link href="/faq">FAQ</Link>
             <Link href="/contact">Contact</Link>
+            <Link href="/sitemap-page">Sitemap</Link>
           </div>
           <div>
             <h5>Legal</h5>
             <Link href="/privacy">Privacy policy</Link>
             <Link href="/terms">Terms of service</Link>
+            <Link href="/disclaimer">Disclaimer</Link>
+            <Link href="/cookie-policy">Cookie policy</Link>
           </div>
           <div>
             <h5>Admin</h5>

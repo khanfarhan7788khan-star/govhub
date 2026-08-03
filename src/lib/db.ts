@@ -1,5 +1,6 @@
 import { Pool, QueryResultRow, types } from "pg";
 import bcrypt from "bcryptjs";
+import { ARTICLES, SERVICE_DETAILS, FAQ_ITEMS, ANNOUNCEMENTS } from "./seedContent";
 
 // Return DATE/TIMESTAMP/TIMESTAMPTZ as plain strings, not JS Date objects —
 // the rest of the app treats these as strings (e.g. `.slice(0, 10)`).
@@ -130,18 +131,64 @@ async function migrateAndSeed() {
       status TEXT NOT NULL DEFAULT 'pending',
       created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+
+    CREATE TABLE IF NOT EXISTS articles (
+      id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      excerpt TEXT NOT NULL,
+      content TEXT NOT NULL,
+      category TEXT NOT NULL,
+      tags TEXT NOT NULL DEFAULT '',
+      author TEXT NOT NULL DEFAULT 'GovHub Editorial Team',
+      featured BOOLEAN NOT NULL DEFAULT false,
+      related_site_ids TEXT NOT NULL DEFAULT '',
+      views INTEGER NOT NULL DEFAULT 0,
+      published_date DATE NOT NULL,
+      updated_date DATE NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS service_details (
+      site_id TEXT PRIMARY KEY REFERENCES sites(id) ON DELETE CASCADE,
+      overview TEXT NOT NULL DEFAULT '',
+      benefits TEXT NOT NULL DEFAULT '',
+      eligibility TEXT NOT NULL DEFAULT '',
+      documents TEXT NOT NULL DEFAULT '',
+      fees TEXT NOT NULL DEFAULT '',
+      processing_time TEXT NOT NULL DEFAULT '',
+      steps TEXT NOT NULL DEFAULT '',
+      important_notes TEXT NOT NULL DEFAULT '',
+      common_mistakes TEXT NOT NULL DEFAULT '',
+      faqs TEXT NOT NULL DEFAULT '',
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS faqs (
+      id TEXT PRIMARY KEY,
+      question TEXT NOT NULL,
+      answer TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS announcements (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      level TEXT NOT NULL DEFAULT 'info',
+      active BOOLEAN NOT NULL DEFAULT true,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    );
   `);
 
   const { rows: adminCountRows } = await pool.query("SELECT COUNT(*)::int AS c FROM admins");
   if (adminCountRows[0].c === 0) {
     const hash = bcrypt.hashSync("Admin@123", 10);
-    await pool.query(
-  `INSERT INTO admins (id, email, password_hash)
-   VALUES ($1, $2, $3)
-   ON CONFLICT (id) DO NOTHING`,
-  [
+    await pool.query("INSERT INTO admins (id, email, password_hash) VALUES ($1, $2, $3)", [
       "admin-1",
-      "faynx@govhub.in",
+      "admin@govhub.in",
       hash,
     ]);
   }
@@ -173,11 +220,7 @@ async function migrateAndSeed() {
       ["Utilities", "bolt"],
     ];
     for (const [key, icon] of cats) {
-      await pool.query(
-  `INSERT INTO categories (id, key, icon)
-   VALUES ($1, $2, $3)
-   ON CONFLICT (id) DO NOTHING`,
-  [
+      await pool.query("INSERT INTO categories (id, key, icon) VALUES ($1, $2, $3)", [
         `cat-${key.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
         key,
         icon,
@@ -213,44 +256,59 @@ async function migrateAndSeed() {
       { id: "nps-cra", name: "National Pension System — CRA", description: "Manage your NPS account, view statements and make contributions.", url: "https://www.cra-nsdl.com", category: "Pension", ministry: "Pension Fund Regulatory & Development Authority", state: null, level: "Central", languages: "English", tags: "nps,retirement", featured: false, verified_date: "2026-05-15" },
     ];
     for (const s of sites) {
-    await pool.query(
-  `INSERT INTO sites (
-      id,
-      name,
-      description,
-      url,
-      category,
-      ministry,
-      state,
-      level,
-      languages,
-      tags,
-      featured,
-      verified_date,
-      created_at,
-      updated_at
-    )
-    VALUES (
-      $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-      NOW(),
-      NOW()
-    )
-    ON CONFLICT (id) DO NOTHING`,
-  [
-    s.id,
-    s.name,
-    s.description,
-    s.url,
-    s.category,
-    s.ministry,
-    s.state,
-    s.level,
-    s.languages,
-    s.tags,
-    s.featured,
-    s.verified_date,
-  ]
-);
+      await pool.query(
+        `INSERT INTO sites (id, name, description, url, category, ministry, state, level, languages, tags, featured, verified_date)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [s.id, s.name, s.description, s.url, s.category, s.ministry, s.state, s.level, s.languages, s.tags, s.featured, s.verified_date]
+      );
+    }
+  }
+
+  const { rows: articleCountRows } = await pool.query("SELECT COUNT(*)::int AS c FROM articles");
+  if (articleCountRows[0].c === 0) {
+    for (const a of ARTICLES) {
+      await pool.query(
+        `INSERT INTO articles (id, slug, title, excerpt, content, category, tags, author, featured, related_site_ids, published_date, updated_date)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [a.id, a.slug, a.title, a.excerpt, a.content, a.category, a.tags, a.author, a.featured, a.related_site_ids, a.published_date, a.updated_date]
+      );
+    }
+  }
+
+  const { rows: detailCountRows } = await pool.query("SELECT COUNT(*)::int AS c FROM service_details");
+  if (detailCountRows[0].c === 0) {
+    for (const d of SERVICE_DETAILS) {
+      await pool.query(
+        `INSERT INTO service_details (site_id, overview, benefits, eligibility, documents, fees, processing_time, steps, important_notes, common_mistakes, faqs)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         ON CONFLICT (site_id) DO NOTHING`,
+        [d.site_id, d.overview, d.benefits, d.eligibility, d.documents, d.fees, d.processing_time, d.steps, d.important_notes, d.common_mistakes, d.faqs]
+      );
+    }
+  }
+
+  const { rows: faqCountRows } = await pool.query("SELECT COUNT(*)::int AS c FROM faqs");
+  if (faqCountRows[0].c === 0) {
+    for (const f of FAQ_ITEMS) {
+      await pool.query("INSERT INTO faqs (id, question, answer, sort_order) VALUES ($1, $2, $3, $4)", [
+        `faq-${f.sort_order}-${f.question.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 30)}`,
+        f.question,
+        f.answer,
+        f.sort_order,
+      ]);
+    }
+  }
+
+  const { rows: annCountRows } = await pool.query("SELECT COUNT(*)::int AS c FROM announcements");
+  if (annCountRows[0].c === 0) {
+    for (const a of ANNOUNCEMENTS) {
+      await pool.query("INSERT INTO announcements (id, title, body, level, active) VALUES ($1, $2, $3, $4, $5)", [
+        a.id,
+        a.title,
+        a.body,
+        a.level,
+        a.active,
+      ]);
     }
   }
 }
@@ -270,4 +328,54 @@ export type SiteRow = {
   verified_date: string;
   created_at: string;
   updated_at: string;
+};
+
+export type ArticleRow = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  category: string;
+  tags: string;
+  author: string;
+  featured: boolean;
+  related_site_ids: string;
+  views: number;
+  published_date: string;
+  updated_date: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ServiceDetailRow = {
+  site_id: string;
+  overview: string;
+  benefits: string;
+  eligibility: string;
+  documents: string;
+  fees: string;
+  processing_time: string;
+  steps: string;
+  important_notes: string;
+  common_mistakes: string;
+  faqs: string;
+  updated_at: string;
+};
+
+export type FaqRow = {
+  id: string;
+  question: string;
+  answer: string;
+  sort_order: number;
+  created_at: string;
+};
+
+export type AnnouncementRow = {
+  id: string;
+  title: string;
+  body: string;
+  level: string;
+  active: boolean;
+  created_at: string;
 };

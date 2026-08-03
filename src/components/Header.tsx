@@ -7,8 +7,8 @@ import Emblem from "./Emblem";
 
 const NAV = [
   { href: "/browse", label: "Browse" },
+  { href: "/blog", label: "Guides" },
   { href: "/favorites", label: "Favourites" },
-  { href: "/guide", label: "Guide" },
   { href: "/about", label: "About" },
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },

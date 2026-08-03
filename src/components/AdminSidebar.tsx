@@ -5,7 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 const NAV = [
   { href: "/admin/dashboard", label: "Overview" },
   { href: "/admin/dashboard/listings", label: "Listings" },
+  { href: "/admin/dashboard/articles", label: "Articles" },
   { href: "/admin/dashboard/categories", label: "Categories" },
+  { href: "/admin/dashboard/faqs", label: "FAQs" },
+  { href: "/admin/dashboard/announcements", label: "Announcements" },
   { href: "/admin/dashboard/reports", label: "Broken link reports" },
   { href: "/admin/dashboard/approvals", label: "Approval queue" },
   { href: "/admin/dashboard/messages", label: "Messages" },

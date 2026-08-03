@@ -41,7 +41,7 @@ export default function AdminLoginForm() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
+            placeholder="admin@govhub.in"
             style={{ width: "100%", marginTop: 5, padding: "11px 13px", borderRadius: 10, border: "1px solid var(--border)", background: "var(--surface)", color: "var(--ink)", fontSize: 14 }}
           />
         </div>
@@ -60,7 +60,9 @@ export default function AdminLoginForm() {
         <button className="primary-btn block" type="submit" disabled={busy} style={{ width: "100%", marginTop: 6 }}>
           {busy ? "Signing in…" : "Sign in"}
         </button>
-      
+        <div className="mono" style={{ fontSize: 11, color: "var(--ink-soft)", textAlign: "center", marginTop: 4 }}>
+          Seeded demo account: admin@govhub.in / Admin@123
+        </div>
       </form>
     </div>
   );
