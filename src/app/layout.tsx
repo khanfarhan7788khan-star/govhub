@@ -50,18 +50,26 @@ const bootScript = `
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+   <html lang="en">
   <head>
-  <Script
-    id="boot-script"
-    strategy="beforeInteractive"
-    dangerouslySetInnerHTML={{
-      __html: bootScript,
-    }}
-  />
+    <Script
+      id="boot-script"
+      strategy="beforeInteractive"
+      dangerouslySetInnerHTML={{
+        __html: bootScript,
+      }}
+    />
 
-  <OrganizationJsonLd />
-  <WebSiteJsonLd />
+    <Script
+      id="monetag-multitag"
+      src="https://quge5.com/88/tag.min.js"
+      data-zone="270455"
+      async
+      data-cfasync="false"
+    />
+
+    <OrganizationJsonLd />
+    <WebSiteJsonLd />
 
   {adsenseConfigured && (
     <Script
